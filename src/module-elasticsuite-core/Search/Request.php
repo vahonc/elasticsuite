@@ -162,6 +162,14 @@ class Request extends \Magento\Framework\Search\Request implements RequestInterf
     /**
      * {@inheritDoc}
      */
+    public function getSpellingType()
+    {
+        return $this->spellingType;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function setCollapse(CollapseInterface $collapse)
     {
         $this->collapse = $collapse;
