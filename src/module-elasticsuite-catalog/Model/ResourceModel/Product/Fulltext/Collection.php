@@ -33,6 +33,9 @@ use Smile\ElasticsuiteCore\Search\RequestInterface;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)
+ * @SuppressWarnings(PHPMD.TooManyFields)
+ * @SuppressWarnings(PHPMD.CamelCasePropertyName)
+ * @SuppressWarnings(PHPMD.CamelCaseMethodName)
  */
 class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
 {
