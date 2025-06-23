@@ -52,7 +52,7 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
     protected $_maxPrice = null;
 
     /**
-     * @var int|null
+     * @var integer|null
      */
     protected $_pricesCount = null;
 
@@ -226,6 +226,7 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
     public function getMinPrice(): ?float
     {
         $this->_prepareStatisticsData();
+
         return $this->_minPrice;
     }
 
@@ -237,6 +238,7 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
     public function getMaxPrice(): ?float
     {
         $this->_prepareStatisticsData();
+
         return $this->_maxPrice;
     }
 
@@ -248,6 +250,7 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
     public function getPricesCount(): ?int
     {
         $this->_prepareStatisticsData();
+
         return $this->_pricesCount;
     }
 
@@ -259,6 +262,7 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
     public function getPriceStandardDeviation(): ?float
     {
         $this->_prepareStatisticsData();
+
         return $this->_priceStandardDeviation;
     }
 
