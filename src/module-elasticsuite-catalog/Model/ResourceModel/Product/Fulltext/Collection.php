@@ -696,9 +696,9 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
         $rate = $this->getCurrencyRate();
 
         $this->_pricesCount            = (int) ($metrics['count'] ?? 0);
-        $this->_minPrice               = round( ((float) ($metrics['min'] ?? 0)) * $rate, 2);
-        $this->_maxPrice               = round( ((float) ($metrics['max'] ?? 0)) * $rate, 2);
-        $this->_priceStandardDeviation = round( ((float) ($metrics['std_deviation'] ?? 0)) * $rate, 2);
+        $this->_minPrice               = round(((float) ($metrics['min'] ?? 0)) * $rate, 2);
+        $this->_maxPrice               = round(((float) ($metrics['max'] ?? 0)) * $rate, 2);
+        $this->_priceStandardDeviation = round(((float) ($metrics['std_deviation'] ?? 0)) * $rate, 2);
 
         return $this;
     }
