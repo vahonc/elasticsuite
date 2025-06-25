@@ -40,31 +40,6 @@ use Smile\ElasticsuiteCore\Search\RequestInterface;
 class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
 {
     /**
-     * @var QueryFactory
-     */
-    protected $queryFactory;
-
-    /**
-     * @var float|null
-     */
-    protected $_minPrice = null;
-
-    /**
-     * @var float|null
-     */
-    protected $_maxPrice = null;
-
-    /**
-     * @var integer|null
-     */
-    protected $_pricesCount = null;
-
-    /**
-     * @var float|null
-     */
-    protected $_priceStandardDeviation = null;
-
-    /**
      * @var QueryResponse
      */
     private $queryResponse;
@@ -134,11 +109,15 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
     private $requestFieldMapper;
 
     /**
+     * @var QueryFactory|null
+     */
+    private ?QueryFactory $queryFactory = null;
+
+    /**
      * Constructor.
      *
      * @SuppressWarnings(PHPMD.ExcessiveParameterList)
      *
-     * @param \Smile\ElasticsuiteCore\Search\Request\Query\QueryFactory    $queryFactory            Query Factory.
      * @param \Magento\Framework\Data\Collection\EntityFactory             $entityFactory           Collection entity factory
      * @param \Psr\Log\LoggerInterface                                     $logger                  Logger.
      * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy           Db Fetch strategy.
@@ -165,7 +144,6 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
      * @param string                                                       $searchRequestName       Search request name.
      */
     public function __construct(
-        \Smile\ElasticsuiteCore\Search\Request\Query\QueryFactory $queryFactory,
         \Magento\Framework\Data\Collection\EntityFactory $entityFactory,
         \Psr\Log\LoggerInterface $logger,
         \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy,
@@ -214,59 +192,10 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
             $connection
         );
 
-        $this->queryFactory       = $queryFactory;
         $this->requestBuilder     = $requestBuilder;
         $this->searchEngine       = $searchEngine;
         $this->requestFieldMapper = $requestFieldMapper;
         $this->searchRequestName  = $searchRequestName;
-    }
-
-    /**
-     * Returns the minimum product price.
-     *
-     * @return float|null
-     */
-    public function getMinPrice(): ?float
-    {
-        $this->_prepareStatisticsData();
-
-        return $this->_minPrice;
-    }
-
-    /**
-     * Returns the maximum product price.
-     *
-     * @return float|null
-     */
-    public function getMaxPrice(): ?float
-    {
-        $this->_prepareStatisticsData();
-
-        return $this->_maxPrice;
-    }
-
-    /**
-     * Returns the number of prices considered in the aggregation.
-     *
-     * @return int|null
-     */
-    public function getPricesCount(): ?int
-    {
-        $this->_prepareStatisticsData();
-
-        return $this->_pricesCount;
-    }
-
-    /**
-     * Returns the price standard deviation (if available).
-     *
-     * @return float|null
-     */
-    public function getPriceStandardDeviation(): ?float
-    {
-        $this->_prepareStatisticsData();
-
-        return $this->_priceStandardDeviation;
     }
 
     /**
@@ -699,6 +628,22 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
     }
 
     /**
+     * Lazily get the QueryFactory instance.
+     *
+     * @return QueryFactory
+     */
+    protected function getQueryFactory()
+    {
+        if ($this->queryFactory === null) {
+            $this->queryFactory = \Magento\Framework\App\ObjectManager::getInstance()
+                ->get(QueryFactory::class);
+        }
+
+        return $this->queryFactory;
+    }
+
+
+    /**
      * Prepares min and max price using Elasticsearch metric aggregation.
      * Ensures compatibility with Magento Core's getMinPrice()/getMaxPrice().
      *
@@ -706,10 +651,6 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
      */
     protected function _prepareStatisticsData()
     {
-        if ($this->_minPrice !== null && $this->_maxPrice !== null) {
-            return $this;
-        }
-
         $storeId = $this->getStoreId();
         $requestName = $this->searchRequestName;
         $customerGroupId = (int) ($this->_productLimitationFilters['customer_group_id'] ?? CustomerGroup::NOT_LOGGED_IN_ID);
@@ -718,7 +659,7 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
         // Clone existing filters and add customer group filter.
         $filters = $this->filters ?: [];
 
-        $filters[] = $this->queryFactory->create(
+        $filters[] = $this->getQueryFactory()->create(
             QueryInterface::TYPE_TERM,
             ['field' => 'customer_group_id', 'value' => $customerGroupId]
         );
@@ -755,9 +696,9 @@ class Collection extends \Magento\Catalog\Model\ResourceModel\Product\Collection
         $rate = $this->getCurrencyRate();
 
         $this->_pricesCount            = (int) ($metrics['count'] ?? 0);
-        $this->_minPrice               = isset($metrics['min']) ? round($metrics['min'] * $rate, 2) : null;
-        $this->_maxPrice               = isset($metrics['max']) ? round($metrics['max'] * $rate, 2) : null;
-        $this->_priceStandardDeviation = isset($metrics['std_deviation']) ? round($metrics['std_deviation'] * $rate, 2) : null;
+        $this->_minPrice               = round( ((float) ($metrics['min'] ?? 0)) * $rate, 2);
+        $this->_maxPrice               = round( ((float) ($metrics['max'] ?? 0)) * $rate, 2);
+        $this->_priceStandardDeviation = round( ((float) ($metrics['std_deviation'] ?? 0)) * $rate, 2);
 
         return $this;
     }
