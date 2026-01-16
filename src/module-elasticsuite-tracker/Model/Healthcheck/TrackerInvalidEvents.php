@@ -68,7 +68,7 @@ class TrackerInvalidEvents extends AbstractCheck
     /**
      * Cached invalid events count.
      *
-     * @var int|null
+     * @var integer|null
      */
     private ?int $invalidEventsCount = null;
 
@@ -80,6 +80,7 @@ class TrackerInvalidEvents extends AbstractCheck
      * @param AuthorizationInterface $authorization User authorization.
      * @param UrlInterface           $urlBuilder    URL builder.
      * @param int                    $sortOrder     Sort order (default: 60).
+     * @param int                    $severity      Severity level.
      */
     public function __construct(
         EventQueueInterface $eventQueue,
@@ -108,9 +109,7 @@ class TrackerInvalidEvents extends AbstractCheck
      */
     public function getStatus(): string
     {
-        return ($this->getNumberOfInvalidTrackerEvents() > 0)
-            ? CheckInterface::STATUS_FAILED
-            : CheckInterface::STATUS_PASSED;
+        return ($this->getNumberOfInvalidTrackerEvents() > 0) ? CheckInterface::STATUS_FAILED : CheckInterface::STATUS_PASSED;
     }
 
     /**
