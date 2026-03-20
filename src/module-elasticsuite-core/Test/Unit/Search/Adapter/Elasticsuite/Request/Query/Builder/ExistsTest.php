@@ -40,6 +40,8 @@ class ExistsTest extends AbstractSimpleQueryBuilder
         $this->assertArrayHasKey('exists', $query);
         $this->assertArrayHasKey('field', $query['exists']);
         $this->assertArrayNotHasKey('_name', $query['exists']);
+
+        $this->assertEquals(ExistsQuery::DEFAULT_BOOST_VALUE, $missingQuery->getBoost());
     }
 
     /**
