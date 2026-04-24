@@ -18,6 +18,7 @@ use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Smile\ElasticsuiteCatalogRule\Api\Rule\Attribute\LocationProviderInterface;
+use Magento\Catalog\Api\Data\CategoryAttributeInterface;
 
 /**
  * Virtual Category Attribute Location Provider.
@@ -42,16 +43,6 @@ use Smile\ElasticsuiteCatalogRule\Api\Rule\Attribute\LocationProviderInterface;
 class VirtualCategoryLocationProvider implements LocationProviderInterface
 {
     /**
-     * Attribute code storing virtual category rules.
-     */
-    private const ATTRIBUTE_CODE = 'virtual_rule';
-
-    /**
-     * Entity type code for categories.
-     */
-    private const ENTITY_TYPE = 'catalog_category';
-
-    /**
      * @var ResourceConnection
      */
     private ResourceConnection $resource;
@@ -62,18 +53,26 @@ class VirtualCategoryLocationProvider implements LocationProviderInterface
     private AttributeRepositoryInterface $attributeRepository;
 
     /**
+     * @var string
+     */
+    private string $attributeCode;
+
+    /**
      * Constructor.
      *
      * @param ResourceConnection           $resource            Database resource connection.
      * @param AttributeRepositoryInterface $attributeRepository Repository used to retrieve EAV attribute metadata
      *                                                          (attribute ID and backend table for virtual_rule).
+     * @param string                       $attributeCode       Attribute code used to store virtual category rules.
      */
     public function __construct(
         ResourceConnection $resource,
-        AttributeRepositoryInterface $attributeRepository
+        AttributeRepositoryInterface $attributeRepository,
+        string $attributeCode = 'virtual_rule'
     ) {
         $this->resource = $resource;
         $this->attributeRepository = $attributeRepository;
+        $this->attributeCode = $attributeCode;
     }
 
     /**
@@ -91,8 +90,8 @@ class VirtualCategoryLocationProvider implements LocationProviderInterface
         try {
             // Load the virtual_rule attribute metadata.
             $eavAttribute = $this->attributeRepository->get(
-                self::ENTITY_TYPE,
-                self::ATTRIBUTE_CODE
+                CategoryAttributeInterface::ENTITY_TYPE_CODE,
+                $this->attributeCode
             );
         } catch (NoSuchEntityException $e) {
             // Attribute not found => cannot be used anywhere.

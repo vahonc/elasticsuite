@@ -15,6 +15,7 @@
 namespace Smile\ElasticsuiteCatalogOptimizer\Model\Rule\Attribute;
 
 use Magento\Framework\App\ResourceConnection;
+use Smile\ElasticsuiteCatalogOptimizer\Api\Data\OptimizerInterface;
 use Smile\ElasticsuiteCatalogRule\Api\Rule\Attribute\LocationProviderInterface;
 
 /**
@@ -36,11 +37,6 @@ use Smile\ElasticsuiteCatalogRule\Api\Rule\Attribute\LocationProviderInterface;
  */
 class OptimizerLocationProvider implements LocationProviderInterface
 {
-    /**
-     * Optimizer table name.
-     */
-    private const TABLE_NAME = 'smile_elasticsuite_optimizer';
-
     /**
      * @var ResourceConnection
      */
@@ -72,7 +68,7 @@ class OptimizerLocationProvider implements LocationProviderInterface
         }
 
         $connection = $this->resource->getConnection();
-        $tableName  = $this->resource->getTableName(self::TABLE_NAME);
+        $tableName = $this->resource->getTableName(OptimizerInterface::TABLE_NAME);
 
         /**
          * Build LIKE pattern:
