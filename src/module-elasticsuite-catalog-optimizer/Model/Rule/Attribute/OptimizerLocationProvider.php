@@ -14,22 +14,15 @@
 
 namespace Smile\ElasticsuiteCatalogOptimizer\Model\Rule\Attribute;
 
-use Magento\Framework\App\ResourceConnection;
-use Smile\ElasticsuiteCatalogOptimizer\Api\Data\OptimizerInterface;
 use Smile\ElasticsuiteCatalogRule\Api\Rule\Attribute\LocationProviderInterface;
+use Smile\ElasticsuiteCatalogOptimizer\Model\ResourceModel\Optimizer\CollectionFactory;
+use Smile\ElasticsuiteAbCampaign\Ui\Component\Optimizer\Listing\FilterCollectionNoCampaign;
 
 /**
- * Catalog Optimizer Attribute Location Provider.
+ * Catalog Optimizer Location Provider (excluding A/B Campaign optimizers)
  *
- * This provider checks whether a given attribute is used in any
- * Elasticsuite Catalog Optimizer rule.
- *
- * It performs a database lookup on the `smile_elasticsuite_optimizer` table,
- * scanning the `rule_condition` column for serialized conditions containing
- * the attribute code.
- *
- * Current implementation relies on a LIKE-based SQL query:
- *    rule_condition LIKE '%"attribute":"<attribute_code>"%'
+ * This provider reuses the same filtering logic as the admin grid
+ * to ensure consistency with business rules.
  *
  * @category Smile
  * @package  Smile\ElasticsuiteCatalogOptimizer
@@ -38,28 +31,31 @@ use Smile\ElasticsuiteCatalogRule\Api\Rule\Attribute\LocationProviderInterface;
 class OptimizerLocationProvider implements LocationProviderInterface
 {
     /**
-     * @var ResourceConnection
+     * @var CollectionFactory
      */
-    private ResourceConnection $resource;
+    private CollectionFactory $collectionFactory;
+
+    /**
+     * @var FilterCollectionNoCampaign
+     */
+    private FilterCollectionNoCampaign $noCampaignFilter;
 
     /**
      * Constructor.
      *
-     * @param ResourceConnection $resource Database resource connection.
+     * @param CollectionFactory          $collectionFactory Optimizer collection factory.
+     * @param FilterCollectionNoCampaign $noCampaignFilter  Filter to exclude campaign-linked optimizers.
      */
-    public function __construct(ResourceConnection $resource)
-    {
-        $this->resource = $resource;
+    public function __construct(
+        CollectionFactory $collectionFactory,
+        FilterCollectionNoCampaign $noCampaignFilter
+    ) {
+        $this->collectionFactory = $collectionFactory;
+        $this->noCampaignFilter = $noCampaignFilter;
     }
 
     /**
-     * Check if attribute is present in any optimizer rule.
-     *
-     * This method executes a COUNT query to determine if at least one
-     * optimizer rule references the provided attribute.
-     *
-     * @param string $attribute Attribute code.
-     * @return bool
+     * {@inheritdoc}
      */
     public function isPresent(string $attribute): bool
     {
@@ -67,27 +63,20 @@ class OptimizerLocationProvider implements LocationProviderInterface
             return false;
         }
 
-        $connection = $this->resource->getConnection();
-        $tableName = $this->resource->getTableName(OptimizerInterface::TABLE_NAME);
+        $collection = $this->collectionFactory->create();
 
-        /**
-         * Build LIKE pattern:
-         * We search for exact match of JSON fragment:
-         *     "attribute":"<attribute_code>"
-         *
-         * Important:
-         * - We use bind parameter to avoid SQL injection
-         * - Wildcards are added around the pattern
-         */
-        $likePattern = '%"attribute":"' . $attribute . '"%';
+        // Apply same logic as UI.
+        $this->noCampaignFilter->process($collection);
 
-        $select = $connection->select()
-            ->from($tableName, new \Zend_Db_Expr('COUNT(*)'))
-            ->where('rule_condition LIKE ?', $likePattern)
-            ->limit(1);
+        // Apply attribute search.
+        $collection->addFieldToFilter(
+            'rule_condition',
+            ['like' => '%"attribute":"' . $attribute . '"%']
+        );
 
-        $count = (int) $connection->fetchOne($select);
+        // Lightweight existence check.
+        $collection->getSelect()->limit(1);
 
-        return $count > 0;
+        return (bool) $collection->getSize();
     }
 }
